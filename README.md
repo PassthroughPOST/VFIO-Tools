@@ -20,10 +20,9 @@ $SYSCONFDIR/libvirt/hooks/qemu.d/vm_name/hook_name/state_name/yourhook.conf
 ### switch_displays.sh
 This hook allows you to automatically switch your monitor input to your VM's display.  
 To achieve this you need to have `ddcutil` installed and working and you need a DDC/CI capable monitor.  
-For a more detailed explanation and write-up, check out https://passthroughpo.st
+For a more detailed explanation and write-up, check out https://passthroughpo.st  
 
+&nbsp;  
 
-
-We enjoy creating these tools for the community and everything we make is completely free and open source -- but developing them takes a lot of time and effort. Consider [becoming a Patron](https://www.patreon.com/PassthroughPost) to keep projects like these alive.
-
+***We enjoy creating these tools for the community and everything we make is completely free and open source -- but developing them takes a lot of time and effort. Consider [becoming a Patron](https://www.patreon.com/PassthroughPost) to keep projects like these alive.***
 
