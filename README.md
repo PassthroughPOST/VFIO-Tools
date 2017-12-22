@@ -1,5 +1,6 @@
 # VFIO-Tools
 A collection of tools and scripts that aim to make PCI passthrough a little easier.
+For more in-depth guides on how to use these tools, as well as PCI passthrough related news, benchmarks and tutorials, visit us on https://passthroughpo.st
 
 ## libvirt_hooks
 
@@ -20,4 +21,9 @@ $SYSCONFDIR/libvirt/hooks/qemu.d/vm_name/hook_name/state_name/yourhook.conf
 This hook allows you to automatically switch your monitor input to your VM's display.  
 To achieve this you need to have `ddcutil` installed and working and you need a DDC/CI capable monitor.  
 For a more detailed explanation and write-up, check out https://passthroughpo.st
+
+
+
+We enjoy creating these tools for the community and everything we make is completely free and open source -- but developing them takes a lot of time and effort. Consider [becoming a Patron](https://www.patreon.com/PassthroughPost) to keep projects like these alive.
+
 
