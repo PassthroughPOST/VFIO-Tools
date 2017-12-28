@@ -33,7 +33,7 @@ Usage: vfioselect [<arguments>]
   -o,--online            Attempt to bind/unbind without the need to reboot
   -h,--help              Display this help dialogue
 ```
-- vfioselect parses the rules that you define, if you have a rule already made, it is best to rename it to defaule for vfioselect (vfioselect.conf), but a config file can be specified via `-g /path/to/config.conf`
+- vfioselect parses the rules that you define, if you have a rule already made, it is best to rename it to the default for vfioselect (vfioselect.conf), but a config file can be specified via `-g /path/to/config.conf`
 - If binding with a GPU shared between host and guest, it might be a good idea to use a qemu hook to switch input after the machine boots.
 
 &nbsp;
