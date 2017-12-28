@@ -1,0 +1,222 @@
+#!/bin/bash
+# Script to bind the VFIO stub driver to PCI devices
+# By Trent Arcuri, 2017
+#
+
+tmpfile=$(mktemp)
+genfile='/etc/modprobe.d/vfioselect.conf'
+online=false
+
+usage()
+{
+  echo """Usage: $(basename $0) [<arguments>]
+  -t,--tmpfile  <path>   Specify path to temporary file
+  -g,--genfile  <path>   Specify path to modprobe rule
+  -o,--online            Attempt to bind/unbind without the need to reboot
+  -h,--help              Display this help dialogue"""
+}
+
+cleanup()
+{
+  rm $tmpfile
+
+  if [ -e $genfile.old ]; then
+    rm $genfile.old
+  fi
+}
+
+makelist()
+{
+  if [ -e $genfile ]; then
+    cp $genfile $genfile.old
+  else
+    touch $genfile
+  fi
+
+  IFS=$'\n' 	# make newlines the only separator
+  for pci in $(lspci -n | awk '{print $3}')
+  do
+    if grep -qi $pci "$genfile"; then
+      menuitems+=("$pci" "$(lspci -d $pci)" "on")
+    else
+      menuitems+=("$pci" "$(lspci -d $pci)" "off")
+    fi
+  done
+
+  if dialog --keep-tite --checklist \
+      "Choose which devices to bind:" 30 180 30 \
+      "${menuitems[@]}" 2>$tmpfile; then
+    return 0
+  else
+    return 1
+  fi
+}
+
+
+makefile()
+{
+  if which dialog > /dev/null ; then
+    echo "options vfio-pci ids=$(cat $tmpfile | sed 's/\ /,/g')" > $genfile
+    echo "$genfile written successfully."
+  else
+    dialog
+    exit 1
+  fi
+}
+
+bind()
+{
+  #Unbind from device drivers, and bind to VFIO
+  echo "Bind functionality is in beta, please report bugs!"
+
+  for id in ${bindids[@]};do
+    #Get pci slot
+    pci=$(lspci -Dd $id|grep -Eoh "[0-9a-f]{4}:[0-9a-f]{2}:[0-9a-f]{2}\.[0-9]")
+    pcipath="/sys/bus/pci/devices/$pci"
+    rmkd+=("$(stat $pcipath/driver -c %N|awk -F/ '{print $NF}'|sed "s/'//")")
+    #Rebinding process
+    if [ -e /sys/bus/pci/devices/$pci/driver ]; then
+      echo "$pci" > /sys/bus/pci/devices/$pci/driver/unbind
+    fi
+    echo "$id"|sed 's/:/ /'> /sys/bus/pci/drivers/vfio-pci/new_id
+  done
+}
+
+unbind()
+{
+  # Unbind from VFIO, and bind to device drivers
+  echo "Unbind functionality is in beta, please report bugs!"
+
+  for id in ${unbindids[@]};do
+    #Get pci slot
+    pci=$(lspci -Dd $id|grep -Eoh "[0-9a-f]{4}:[0-9a-f]{2}:[0-9a-f]{2}\.[0-9]")
+    rmkd+=("$(lspci -ks $pci | awk '{print $5}' | tail -n1)")
+    #Rebinding process
+    echo 1 > /sys/bus/pci/devices/$pci/remove
+    echo 1 > /sys/bus/pci/rescan
+  done
+}
+
+online()
+{
+  #Get list of new and old ID's
+  for id in $(grep -Eoh "[0-9a-z]{4}:[0-9a-z]{4}" $genfile); do
+    newids+=("$id")
+  done
+  for id in $(grep -Eoh "[0-9a-z]{4}:[0-9a-z]{4}" $genfile.old); do
+    oldids+=("$id")
+  done
+
+  #Get list of different ID's, determine what to do with them
+  for id in $(echo ${newids[@]} ${oldids[@]} | sed 's/ /\n/g'| sort | uniq -u)
+  do
+    diffids+=("$id")
+  done
+  for id in $(echo ${diffids[@]} ${oldids[@]} | sed 's/ /\n/g'| sort | uniq -d)
+  do
+    unbindids+=("$id")
+  done
+  for id in $(echo ${diffids[@]} ${newids[@]} | sed 's/ /\n/g'| sort | uniq -d)
+  do
+    bindids+=("$id")
+  done
+
+  echo "Bind:   ${bindids[@]}"
+  echo "Unbind: ${unbindids[@]}"
+  echo
+
+  #Bind/Unbind the ID's respectively
+  if [[ ${bindids[@]} ]]; then
+    bind
+  fi
+  if [[ ${unbindids[@]} ]]; then
+    unbind
+  fi
+}
+
+main()
+{
+  #Check dependencies
+  if which dialog > /dev/null ; then
+    :
+  else
+    dialog
+    exit 1
+  fi
+
+  #Argument formatting
+	local argv=("$@");
+	# argc is the count of arguments
+	local argc=${#argv[@]};
+
+	# this is important to ensure globbing is active
+	shopt -s extglob;
+
+	# Handle compressed short options
+	re="(^| )\\-[[:alnum:]]{2,}"; # regex to detect shortoptions
+	# we evaluate this as a long string, thus ${argv[*]}, instead of ${argv[@]}
+	if [[ "${argv[*]}" =~ $re ]]; then
+		local compiled_args=();
+		for ((i=0; i<argc; i++)); do
+			if [[ "${argv[$i]}" =~ $re ]]; then
+				local compressed_args="${argv[$i]#*-}";
+				for ((r=0; r<${#compressed_args}; r++)); do
+					compiled_args+=("-${compressed_args:$r:1}");
+				done
+				shift;
+				compiled_args+=("$@");
+				## recurse
+				main "${compiled_args[@]}";
+				## we "pass" the exit code back up the recursions to the OS
+				exit $?;
+			fi
+			compiled_args+=("${argv[$i]}");
+			shift;
+		done
+		exit;
+	fi
+
+	#Check arguments
+	while [ "$1" != "" ]; do
+		case $1 in
+			-t | --tmpfile )
+				shift
+				cleanup
+				tmpfile=$1
+				;;
+			-g | --genfile )
+				shift
+				genfile=$1
+				;;
+			-o | --online )
+				online=true
+				;;
+			-h | --help )
+				usage
+        exit
+        ;;
+      -?*)
+        printf 'WARN: Unknown option (ignored): %s\n' "$1" >&2
+		esac
+		shift
+	done
+
+	#Check for root access
+	if [[ $EUID -ne 0 ]]; then
+		echo "This program requires root access."
+		exit 1
+	else
+		if makelist; then
+			makefile
+		else
+			cleanup
+			exit 130
+		fi
+		if $online; then
+			online
+		fi
+		cleanup
+	fi
+}
+
+main "$@"
