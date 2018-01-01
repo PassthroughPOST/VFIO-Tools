@@ -66,7 +66,8 @@ makefile()
 bind()
 {
   #Unbind from device drivers, and bind to VFIO
-  echo "Bind functionality is in beta, please report bugs!"
+  echo "Bind functionality is disabled temporarily."
+  exit 1
 
   for id in ${bindids[@]};do
     #Get pci slot
@@ -84,7 +85,8 @@ bind()
 unbind()
 {
   # Unbind from VFIO, and bind to device drivers
-  echo "Unbind functionality is in beta, please report bugs!"
+  echo "Unbind functionality is disabled temporarily."
+  exit 1
 
   for id in ${unbindids[@]};do
     #Get pci slot
