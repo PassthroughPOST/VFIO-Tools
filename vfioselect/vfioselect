@@ -36,7 +36,7 @@ makelist()
   IFS=$'\n' 	# make newlines the only separator
   for pci in $(lspci -n | awk '{print $1}')
   do
-    if grep -qi $pci "$genfile"; then
+    if grep -qi $(lspci -ns $pci|awk '{print $3}') "$genfile"; then
       menuitems+=("$pci" "$(lspci -nns $pci|awk '{sub($1 FS,"")}7')" "on")
     else
       menuitems+=("$pci" "$(lspci -nns $pci|awk '{sub($1 FS,"")}7')" "off")
@@ -55,13 +55,12 @@ makelist()
 
 makefile()
 {
-  if which dialog > /dev/null ; then
-    echo "options vfio-pci ids=$(cat $tmpfile | sed 's/\ /,/g')" > $genfile
-    echo "$genfile written successfully."
-  else
-    dialog
-    exit 1
-  fi
+  printf "options vfio-pci ids=" > $genfile
+  IFS=" "
+  for line in $(cat $tmpfile); do
+    printf "$(lspci -ns $line|awk '{print $3}')," >> $genfile
+  done
+  echo "$genfile written successfully."
 }
 
 bind()
