@@ -6,6 +6,7 @@
 tmpfile=$(mktemp)
 genfile='/etc/modprobe.d/vfioselect.conf'
 online=false
+declare -A lspciid
 
 usage()
 {
@@ -25,6 +26,35 @@ cleanup()
   fi
 }
 
+format()
+{
+  lspci -x > $tmpfile
+
+  IFS=$'\n' 	# make newlines the only separator
+  for line in $(lspci -F $tmpfile -n)
+  do
+    lspcimach+=("$line")
+    lspcibus+=("$(echo $line|awk '{print $1}')")
+  done
+
+  for line in "${lspcibus[@]}"
+  do
+    lspciid[$line]="$(lspci -F $tmpfile -ns $line|awk '{print $3}')"
+  done
+  for line in "${lspcibus[@]}"
+  do
+    #echo ${lspciid[$line]}
+    :
+  done
+
+  for line in $(lspci -F $tmpfile -mm)
+  do
+    lspcihuma+=("line")
+    lspcifm+=("$(echo $line|awk -F\" '{print $4" "$2": "$6}')")
+  done
+  printf '' > $tmpfile
+}
+
 makelist()
 {
   if [ -e $genfile ]; then
@@ -34,13 +64,16 @@ makelist()
   fi
 
   IFS=$'\n' 	# make newlines the only separator
-  for pci in $(lspci -n | awk '{print $1}')
+  store=0
+  for pci in "${lspcibus[@]}"
   do
-    if grep -qi $(lspci -ns $pci|awk '{print $3}') "$genfile"; then
-      menuitems+=("$pci" "$(lspci -nns $pci|awk '{sub($1 FS,"")}7')" "on")
+    if grep -Eqi "${lspciids[$store]}" "$genfile" && grep -Eqi $pci "$genfile"
+    then
+      menuitems+=("$pci" "${lspcifm[$store]}" "on")
     else
-      menuitems+=("$pci" "$(lspci -nns $pci|awk '{sub($1 FS,"")}7')" "off")
+      menuitems+=("$pci" "${lspcifm[$store]}" "off")
     fi
+    let store++
   done
 
   if dialog --keep-tite --checklist \
@@ -55,11 +88,13 @@ makelist()
 
 makefile()
 {
-  printf "options vfio-pci ids=" > $genfile
+  printf "#$(cat $tmpfile)\n" > $genfile
+  printf "options vfio-pci ids=" >> $genfile
   IFS=" "
   for line in $(cat $tmpfile); do
-    printf "$(lspci -ns $line|awk '{print $3}')," >> $genfile
+    printf "${lspciid[$line]}, " >> $genfile
   done
+  truncate -s-2 $genfile #Fix trailing comma
   echo "$genfile written successfully."
 }
 
@@ -207,6 +242,7 @@ main()
 		echo "This program requires root access."
 		exit 1
 	else
+    format
 		if makelist; then
 			makefile
 		else
