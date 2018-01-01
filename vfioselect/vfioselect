@@ -41,18 +41,13 @@ format()
   do
     lspciid[$line]="$(lspci -F $tmpfile -ns $line|awk '{print $3}')"
   done
-  for line in "${lspcibus[@]}"
-  do
-    #echo ${lspciid[$line]}
-    :
-  done
 
   for line in $(lspci -F $tmpfile -mm)
   do
     lspcihuma+=("line")
     lspcifm+=("$(echo $line|awk -F\" '{print $4" "$2": "$6}')")
   done
-  printf '' > $tmpfile
+  > $tmpfile
 }
 
 makelist()
@@ -101,34 +96,23 @@ makefile()
 bind()
 {
   #Unbind from device drivers, and bind to VFIO
-  echo "Bind functionality is disabled temporarily."
-  exit 1
-
   for id in ${bindids[@]};do
     #Get pci slot
-    pci=$(lspci -Dd $id|grep -Eoh "[0-9a-f]{4}:[0-9a-f]{2}:[0-9a-f]{2}\.[0-9]")
-    pcipath="/sys/bus/pci/devices/$pci"
-    rmkd+=("$(stat $pcipath/driver -c %N|awk -F/ '{print $NF}'|sed "s/'//")")
+    #pci=$(lspci -Dd $id|grep -Eoh "[0-9a-f]{4}:[0-9a-f]{2}:[0-9a-f]{2}\.[0-9]")
+    pcipath="/sys/bus/pci/devices/0000:$id"
     #Rebinding process
     if [ -e /sys/bus/pci/devices/$pci/driver ]; then
       echo "$pci" > /sys/bus/pci/devices/$pci/driver/unbind
     fi
-    echo "$id"|sed 's/:/ /'> /sys/bus/pci/drivers/vfio-pci/new_id
+    echo "${lspciids[$id]}"|sed 's/:/ /'> /sys/bus/pci/drivers/vfio-pci/new_id
   done
 }
 
 unbind()
 {
   # Unbind from VFIO, and bind to device drivers
-  echo "Unbind functionality is disabled temporarily."
-  exit 1
-
   for id in ${unbindids[@]};do
-    #Get pci slot
-    pci=$(lspci -Dd $id|grep -Eoh "[0-9a-f]{4}:[0-9a-f]{2}:[0-9a-f]{2}\.[0-9]")
-    rmkd+=("$(lspci -ks $pci | awk '{print $5}' | tail -n1)")
-    #Rebinding process
-    echo 1 > /sys/bus/pci/devices/$pci/remove
+    echo 1 > /sys/bus/pci/devices/0000:$id/remove
     echo 1 > /sys/bus/pci/rescan
   done
 }
@@ -136,10 +120,10 @@ unbind()
 online()
 {
   #Get list of new and old ID's
-  for id in $(grep -Eoh "[0-9a-z]{4}:[0-9a-z]{4}" $genfile); do
+  for id in $(grep -Eoh "[0-9a-f]{2}:[0-9a-f]{2}\.[0-9]" $genfile); do
     newids+=("$id")
   done
-  for id in $(grep -Eoh "[0-9a-z]{4}:[0-9a-z]{4}" $genfile.old); do
+  for id in $(grep -Eoh "[0-9a-f]{2}:[0-9a-f]{2}\.[0-9]" $genfile.old); do
     oldids+=("$id")
   done
 
@@ -160,6 +144,8 @@ online()
   echo "Bind:   ${bindids[@]}"
   echo "Unbind: ${unbindids[@]}"
   echo
+  bind
+  exit
 
   #Bind/Unbind the ID's respectively
   if [[ ${bindids[@]} ]]; then
