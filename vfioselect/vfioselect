@@ -104,9 +104,7 @@ bind()
     if [ -e $pcipath ]; then
       echo "$pci" > "$pcipath/driver/unbind"
     fi
-    echo "vfio-pci" > "$pcipath/driver_override"
     echo "${lspciids[$id]}"|sed 's/:/ /'> /sys/bus/pci/drivers/vfio-pci/new_id
-    echo "$pci" > "/sys/bus/pci/drivers_probe"
   done
 }
 
@@ -115,7 +113,7 @@ unbind()
   # Unbind from VFIO, and bind to device drivers
   for id in ${unbindids[@]};do
     echo 1 > /sys/bus/pci/devices/0000:$id/remove
-    echo 1 > /sys/bus/pci/rescan
+    echo "0000:$id" > "/sys/bus/pci/drivers_probe"
   done
 }
 
