@@ -98,13 +98,15 @@ bind()
   #Unbind from device drivers, and bind to VFIO
   for id in ${bindids[@]};do
     #Get pci slot
-    #pci=$(lspci -Dd $id|grep -Eoh "[0-9a-f]{4}:[0-9a-f]{2}:[0-9a-f]{2}\.[0-9]")
-    pcipath="/sys/bus/pci/devices/0000:$id"
+    pci="0000:$id"
+    pcipath="/sys/bus/pci/devices/$pci"
     #Rebinding process
-    if [ -e /sys/bus/pci/devices/$pci/driver ]; then
-      echo "$pci" > /sys/bus/pci/devices/$pci/driver/unbind
+    if [ -e $pcipath ]; then
+      echo "$pci" > "$pcipath/driver/unbind"
     fi
+    echo "vfio-pci" > "$pcipath/driver_override"
     echo "${lspciids[$id]}"|sed 's/:/ /'> /sys/bus/pci/drivers/vfio-pci/new_id
+    echo "$pci" > "/sys/bus/pci/drivers_probe"
   done
 }
 
