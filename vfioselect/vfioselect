@@ -89,7 +89,7 @@ makefile()
   for line in $(cat $tmpfile); do
     printf "${lspciid[$line]}," >> $genfile
   done
-  truncate -s-2 $genfile #Fix trailing comma
+  truncate -s-1 $genfile #Fix trailing comma
   echo "$genfile written successfully."
 }
 
