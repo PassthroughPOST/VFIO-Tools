@@ -97,6 +97,7 @@ bind()
 {
   #Unbind from device drivers, and bind to VFIO
   for id in ${bindids[@]};do
+    echo "Binding $id"
     #Get pci slot
     pci="0000:$id"
     pcipath="/sys/bus/pci/devices/$pci"
@@ -104,7 +105,7 @@ bind()
     if [ -e $pcipath ]; then
       echo "$pci" > "$pcipath/driver/unbind"
     fi
-    echo "${lspciids[$id]}"|sed 's/:/ /'> /sys/bus/pci/drivers/vfio-pci/new_id
+    echo "${lspciid[$id]}"|sed 's/:/ /'> /sys/bus/pci/drivers/vfio-pci/new_id
   done
 }
 
@@ -112,13 +113,15 @@ unbind()
 {
   # Unbind from VFIO, and bind to device drivers
   for id in ${unbindids[@]};do
+    echo "Unbinding $id"
     echo 1 > /sys/bus/pci/devices/0000:$id/remove
-    echo "0000:$id" > "/sys/bus/pci/drivers_probe"
   done
+  echo 1 > /sys/bus/pci/rescan
 }
 
 online()
 {
+  IFS=$'\n'
   #Get list of new and old ID's
   for id in $(grep -Eoh "[0-9a-f]{2}:[0-9a-f]{2}\.[0-9]" $genfile); do
     newids+=("$id")
@@ -144,8 +147,6 @@ online()
   echo "Bind:   ${bindids[@]}"
   echo "Unbind: ${unbindids[@]}"
   echo
-  bind
-  exit
 
   #Bind/Unbind the ID's respectively
   if [[ ${bindids[@]} ]]; then
