@@ -1,0 +1,7 @@
+
+#
+# /etc/fstab: static file system information
+#
+# HugePages
+hugetlbfs                       /dev/hugepages/2M       hugetlbfs       mode=1770,gid=994,pagesize=2M   0 0
+hugetlbfs /dev/hugepages/1G hugetlbfs mode=1770,gid=994,pagesize=1G 0 0
