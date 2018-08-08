@@ -31,8 +31,6 @@ function allocPages {
 function prepMemory {
     # Prepare memory for allocation
     echo 1 > /proc/sys/vm/compact_memory
-    #echo 3 > /proc/sys/vm/drop_caches
-    #echo 1 > /proc/sys/vm/overcommit_memory
 }
 
 # If VM fits into memory, then allocate HugePages
