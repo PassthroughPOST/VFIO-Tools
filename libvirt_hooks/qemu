@@ -18,11 +18,25 @@ BASEDIR="$(dirname $0)"
 
 HOOKPATH="$BASEDIR/qemu.d/$GUEST_NAME/$HOOK_NAME/$STATE_NAME"
 
-set -e # If a script exits with an error, we should as well.
+set +e  # If one of the hooks returns a non-zero result, this script must not fail, so that the failure can be properly passed back to libvirtd
 
-if [ -f "$HOOKPATH" ]; then
-    eval "$HOOKPATH" "$@"
-elif [ -d "$HOOKPATH" ]; then
-    find -L "$HOOKPATH" -maxdepth 1 -type f -executable -exec {} "$@" \;
+hooks=()
+if [ -f "${HOOKPATH}" ]; then
+	# If a file, add it to the hooks array
+    hooks+=("${HOOKPATH}")
+elif [ -d "${HOOKPATH}" ]; then
+	# If a dir, add all hook file paths immediately within to the hooks array, delimited by nulls
+	while IFS= read -r -d $'\0'; do
+		hooks+=("${REPLY}")
+	done < <( find -L "${HOOKPATH}" -maxdepth 1 -type f -executable -print0 )
 fi
 
+# Run each hook in the hooks array in no particular order; in case of a non-zero return code, emit its stderr output and exit with its return code
+for hook in "${hooks[@]}"; do
+    stderr="$( ${hook} $@ 2>&1 >/dev/null )"
+    rc=$?
+    if (( $rc != 0 )); then
+        echo "${stderr}" >&2
+        exit $rc
+    fi
+done
