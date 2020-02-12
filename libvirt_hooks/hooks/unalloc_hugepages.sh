@@ -8,26 +8,25 @@
 # $SYSCONFDIR/libvirt/hooks/qemu.d/your_vm/prepare/begin/
 # $SYSCONFDIR/libvirt/hooks/qemu.d/your_vm/release/end/
 # $SYSCONFDIR usually is /etc/libvirt.
-# Set the files as executable through `chmod +x`.
-#
-# Also make sure to configure your VM's XML file and /etc/fstab or this script won't work.
-
-# Get size of VM-Memory and HugePages
-XML_PATH=/etc/libvirt/qemu/$1.xml
-MEM_GUEST=$(grep '<memory unit' $XML_PATH    | grep -ohE '[[:digit:]]+')    # VM memory to be allocated
-HPG_SIZE=$(grep '<page size' $XML_PATH       | grep -ohE '[[:digit:]]+')    # HugePage size
+# Get path to guest XML
+XML_PATH="/etc/libvirt/qemu/${1}.xml"
+# Get guest HugePage size
+HPG_SIZE=$(grep '<page size' "$XML_PATH" | grep -ohE '[[:digit:]]+')
+# Set path to HugePages
+HPG_PATH="/sys/devices/system/node/node0/hugepages"
 
 function unallocPages {
-    # Define path and current amount of HugePages
-    HPG_PATH=/sys/devices/system/node/node0/hugepages/hugepages-"$HPG_SIZE"kB/nr_hugepages
-    HPG_CURRENT=$(cat $HPG_PATH)
+	# VM memory to be allocated
+	MEM_GUEST=$(grep '<memory unit' "$XML_PATH" | grep -ohE '[[:digit:]]+')
+	# Current number of HugePages
+	HPG_CURRENT=$(cat "${HPG_PATH}/hugepages-${HPG_SIZE}kB/nr_hugepages")
 
-    # Unallocate HugePages
-    ((HPG_NEW = HPG_CURRENT - MEM_GUEST / HPG_SIZE ))
-    echo $HPG_NEW > $HPG_PATH
+	# Unallocate HugePages
+	((HPG_NEW = HPG_CURRENT - MEM_GUEST / HPG_SIZE ))
+	echo "$HPG_NEW" > "$HPG_PATH"
 }
 
 # Call function to unallocate HugePages if HugePage count is greater than 0
 if [[ HPG_SIZE -gt 0 ]]; then
-    unallocPages
+	unallocPages
 fi
