@@ -1,9 +1,10 @@
 #! /bin/bash
 #
-# Author:
+# Author: Stefsinn (https://github.com/Stefsinn)
 #
-# This hook automatically (un-)allocates static HugePages when starting/stopping a VM.
-# This file depends on the Passthrough POST hook helper script found in this repo.
+# This hook automatically un-allocates static HugePages when stopping a VM.
+# This file depends on the PassthroughPOST hook helper script found here:
+# https://github.com/PassthroughPOST/VFIO-Tools/tree/master/libvirt_hooks
 # Place this script in BOTH these directories (or symlink it):
 # $SYSCONFDIR/libvirt/hooks/qemu.d/your_vm/prepare/begin/
 # $SYSCONFDIR/libvirt/hooks/qemu.d/your_vm/release/end/
