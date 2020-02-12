@@ -27,14 +27,14 @@ GUEST_MEM=$(grep '<memory unit' "$XML_PATH" | grep -ohE '[[:digit:]]+')
 #   respectively. These will be ran after checks pass at the end of the script.
 function prepare/begin {
   # Allocate HugePages
-  ((HPG_NEW = HPG_CURRENT + GUEST_MEM / HPG_SIZE ))
+  (( HPG_NEW = HPG_CURRENT + GUEST_MEM / HPG_SIZE ))
   echo "$HPG_NEW" > "$HPG_PATH"
   kmessageNotify "Allocating ${GUEST_MEM}kB of HugePages for VM ${GUEST_NAME}"
 }
 
 function release/end {
   # Unallocate HugePages
-  ((HPG_NEW = HPG_CURRENT - GUEST_MEM / HPG_SIZE ))
+  (( HPG_NEW = HPG_CURRENT - GUEST_MEM / HPG_SIZE ))
   echo "$HPG_NEW" > "$HPG_PATH"
   kmessageNotify "Releasing ${GUEST_MEM}kB of HugePages for VM ${GUEST_NAME}"
 }
