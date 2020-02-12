@@ -23,6 +23,14 @@ HPG_CURRENT=$(cat "${HPG_PATH}/hugepages-${HPG_SIZE}kB/nr_hugepages")
 # Get amount of memory used by the guest
 GUEST_MEM=$(grep '<memory unit' "$XML_PATH" | grep -ohE '[[:digit:]]+')
 
+# Define a function used for logging later
+function kmessageNotify {
+  MESSAGE="$1"
+  while read -r line; do
+    echo "libvirt_qemu hugepages: ${line}" > /dev/kmsg 2>&1
+  done < <(echo "${MESSAGE}")
+}
+
 # We define functions here named for each step libvirt calls the hook against
 #   respectively. These will be ran after checks pass at the end of the script.
 function prepare/begin {
@@ -37,13 +45,6 @@ function release/end {
   (( HPG_NEW = HPG_CURRENT - GUEST_MEM / HPG_SIZE ))
   echo "$HPG_NEW" > "$HPG_PATH"
   kmessageNotify "Releasing ${GUEST_MEM}kB of HugePages for VM ${GUEST_NAME}"
-}
-
-function kmessageNotify {
-  MESSAGE="$1"
-  while read -r line; do
-    echo "libvirt_qemu hugepages: ${line}" > /dev/kmsg 2>&1
-  done < <(echo "${MESSAGE}")
 }
 
 # Do some checks before continuing
