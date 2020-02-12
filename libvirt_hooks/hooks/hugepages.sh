@@ -33,9 +33,9 @@ function prepare/begin {
 }
 
 function release/end {
-	# Unallocate HugePages
-	((HPG_NEW = HPG_CURRENT - GUEST_MEM / HPG_SIZE ))
-	echo "$HPG_NEW" > "$HPG_PATH"
+  # Unallocate HugePages
+  ((HPG_NEW = HPG_CURRENT - GUEST_MEM / HPG_SIZE ))
+  echo "$HPG_NEW" > "$HPG_PATH"
   kmessageNotify "Releasing ${GUEST_MEM}kB of HugePages for VM ${GUEST_NAME}"
 }
 
