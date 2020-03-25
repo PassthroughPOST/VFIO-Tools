@@ -17,9 +17,9 @@ XML_PATH="/etc/libvirt/qemu/$GUEST_NAME.xml"
 # Get guest HugePage size
 HPG_SIZE=$(grep '<page size' "$XML_PATH" | grep -ohE '[[:digit:]]+')
 # Set path to HugePages
-HPG_PATH="/sys/devices/system/node/node0/hugepages"
+HPG_PATH="/sys/devices/system/node/node0/hugepages/hugepages-${HPG_SIZE}kB/nr_hugepages"
 # Get current number of HugePages
-HPG_CURRENT=$(cat "${HPG_PATH}/hugepages-${HPG_SIZE}kB/nr_hugepages")
+HPG_CURRENT=$(cat "${HPG_PATH}")
 # Get amount of memory used by the guest
 GUEST_MEM=$(grep '<memory unit' "$XML_PATH" | grep -ohE '[[:digit:]]+')
 
@@ -55,7 +55,7 @@ if [[ $HPG_SIZE -eq 0 ]]; then
 elif [[ -z $GUEST_MEM ]]; then
   echo "ERROR: Can't determine guest's memory allocation" >&2
   exit 1
-elif [[ ! -d "$HPG_PATH"  ]]; then
+elif [[ ! -f "$HPG_PATH"  ]]; then
   # Break if HugePages path doesn't exist
   echo "ERROR: ${HPG_PATH} does not exist. (HugePages disabled in kernel?)" >&2
   exit 1
