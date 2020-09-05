@@ -20,11 +20,15 @@ HOOKPATH="$BASEDIR/qemu.d/$GUEST_NAME/$HOOK_NAME/$STATE_NAME"
 
 set -e # If a script exits with an error, we should as well.
 
-if [ -f "$HOOKPATH" ]; then
-    eval \""$HOOKPATH"\" "$@"
+# check if it's a non-empty executable file
+if [ -f "$HOOKPATH" ] && [ -s "$HOOKPATH"] && [ -x "$HOOKPATH" ]; then
+    eval \"$HOOKPATH\" "$@"
 elif [ -d "$HOOKPATH" ]; then
     while read file; do
-        eval \""$file"\" "$@"
+        # check for null string
+        if [ ! -z "$file" ]; then
+          eval \"$file\" "$@"
+        fi
     done <<< "$(find -L "$HOOKPATH" -maxdepth 1 -type f -executable -print;)"
 fi
 
