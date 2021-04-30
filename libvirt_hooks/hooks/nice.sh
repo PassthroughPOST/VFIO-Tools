@@ -25,8 +25,20 @@ TARGET_NICE="-1"
 
 VM_NAME="$1"
 
+#Check if Vcpu* Folders are in libvirt subfolder
+if ls /sys/fs/cgroup/cpu/machine.slice/machine-qemu*$VM_NAME.scope/libvirt/vcpu* 1> /dev/null 2>&1; then 
+
+    echo "Vcpu* Folders are in libvirt subfolder" > /dev/kmsg
+    vcpu_folder="/sys/fs/cgroup/cpu/machine.slice/machine-qemu*$VM_NAME.scope/libvirt/vcpu*"
+else
+
+    echo "Vcpu* Folders are not in libvirt subfolder"
+    vcpu_folder="/sys/fs/cgroup/cpu/machine.slice/machine-qemu*$VM_NAME.scope/vcpu*" > /dev/kmsg
+  
+fi
+
 # Set the nice of all vCPUs
-for grp in /sys/fs/cgroup/cpu/machine.slice/machine-qemu*$VM_NAME.scope/vcpu*
+for grp in $vcpu_folder
 do
     echo "libvirt-qemu nice: Setting $(basename $grp)'s nice level to $TARGET_NICE" > /dev/kmsg
     for pid in $(cat $grp/tasks)
