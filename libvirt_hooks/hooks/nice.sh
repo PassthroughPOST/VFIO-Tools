@@ -32,8 +32,8 @@ if ls /sys/fs/cgroup/cpu/machine.slice/machine-qemu*$VM_NAME.scope/libvirt/vcpu*
     vcpu_folder="/sys/fs/cgroup/cpu/machine.slice/machine-qemu*$VM_NAME.scope/libvirt/vcpu*"
 else
 
-    echo "Vcpu* Folders are not in libvirt subfolder"
-    vcpu_folder="/sys/fs/cgroup/cpu/machine.slice/machine-qemu*$VM_NAME.scope/vcpu*" > /dev/kmsg
+    echo "Vcpu* Folders are not in libvirt subfolder" > /dev/kmsg
+    vcpu_folder="/sys/fs/cgroup/cpu/machine.slice/machine-qemu*$VM_NAME.scope/vcpu*"
   
 fi
 
