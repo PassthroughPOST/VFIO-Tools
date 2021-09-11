@@ -5,6 +5,9 @@
 # This file depends on the PassthroughPOST hook helper script found here:
 # https://github.com/PassthroughPOST/VFIO-Tools/tree/master/libvirt_hooks
 # This hook only needs to run on `prepare/begin`, not on stop.
+# Place this script in this directory:
+# $SYSCONFDIR/libvirt/hooks/qemu.d/your_vm/prepare/begin/
+# $SYSCONFDIR usually is /etc/libvirt.
 #
 # This hook will help free and compact memory to ease THP allocation.
 # QEMU VMs will use THP (Transparent HugePages) by default if enough
