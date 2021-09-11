@@ -9,6 +9,26 @@
 # $SYSCONFDIR/libvirt/hooks/qemu.d/your_vm/prepare/begin/
 # $SYSCONFDIR/libvirt/hooks/qemu.d/your_vm/release/end/
 # $SYSCONFDIR usually is /etc/libvirt.
+# 
+# ================ 2021-09-11 update by SharkWipf:
+# You probably don't need this script. Any QEMU version since like 2012 has
+# been using THP (Transparent HugePages) by default on pretty much every
+# distro out there. While static hugepages offer some minor benefits over
+# dynamic hugepages, "dynamic" hugepages as this script allocates has none
+# of those additional benefits. The only thing this script adds is that
+# your VM will refuse to start if no hugepages can be allocated, whereas
+# THP would simply fall back to regular pages (and take ages to start, you
+# would quickly notice this being the case).
+# Basically, this script only re-implements something that QEMU already
+# does by default in a more complicated manner. It'll cause more issues
+# than it fixes and won't give you any additional performance benefits.
+# There's pretty much zero reason to use it nowadays.
+#
+# If you're still not convinced, just `grep /proc/hugepages -e Huge` while
+# your VM is running, you'll see how `AnonHugePages` get allocated
+# automatically.
+# ================
+# 
 # Get inputs from libvirt
 GUEST_NAME="$1"
 GUEST_ACTION="$2/$3"
