@@ -1,4 +1,5 @@
 #!/bin/bash
+#
 # Author: SharkWipf (https://github.com/SharkWipf)
 #
 # This file depends on the PassthroughPOST hook helper script found here:
@@ -16,6 +17,7 @@
 #
 # Don't use the old hugepages.sh script in this repo. It's useless.
 # It's only kept in for archival reasons and offers no benefits.
+#
 
 
 # Finish writing any outstanding writes to disk.
