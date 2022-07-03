@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 # Script to bind the VFIO stub driver to PCI devices
 # By Trent Arcuri, 2017
 #
