@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 #
 # Author: Sebastiaan Meijer (sebastiaan@passthroughpo.st)
 #
