@@ -18,16 +18,18 @@ BASEDIR="$(dirname $0)"
 
 HOOKPATH="$BASEDIR/qemu.d/$GUEST_NAME/$HOOK_NAME/$STATE_NAME"
 
+STDIN=$(cat) # Buffer the entirety of stdin so we can pass it on to other scripts. Moderately bad idea, but if the Rust folks can do it so can I.
+
 set -e # If a script exits with an error, we should as well.
 
 # check if it's a non-empty executable file
-if [ -f "$HOOKPATH" ] && [ -s "$HOOKPATH" ] && [ -x "$HOOKPATH" ]; then
-    eval \"$HOOKPATH\" "$@"
+if [ -f "$HOOKPATH" ] && [ -s "$HOOKPATH"] && [ -x "$HOOKPATH" ]; then
+    eval \"$HOOKPATH\" "$@" <<< "$STDIN" # Call the hook with all our arguments and a copy of stdin.
 elif [ -d "$HOOKPATH" ]; then
     while read file; do
         # check for null string
         if [ ! -z "$file" ]; then
-          eval \"$file\" "$@"
+          eval \"$file\" "$@" <<< "$STDIN" # Call each hook with all our arguments and a copy of stdin.
         fi
     done <<< "$(find -L "$HOOKPATH" -maxdepth 1 -type f -executable -print;)"
 fi
